@@ -1,0 +1,70 @@
+openapi: 3.0.0
+info:
+  title: iTunes Proxy API
+  version: 1.0.0
+  description: API to search for albums
+  contact:
+    name: Wilmer Uruchi
+    email: twilmer1999@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+paths:
+  /v0/albums:
+    get:
+      summary: Search for albums
+      description: Search for albums by artist name
+      parameters:
+        - name: artist
+          in: query
+          description: Artist name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of albums
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Album'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Album:
+      type: object
+      properties:
+        artistName:
+          type: string
+        collectionName:
+          type: string
+        releaseDate:
+          type: string
+          format: date
+        primaryGenreName:
+          type: string
+        trackCount:
+          type: integer
+        collectionPrice:
+          type: number
+        currency:
+          type: string
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
