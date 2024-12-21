@@ -1,0 +1,19 @@
+{
+  "name": "itunes-proxy-api",
+  "version": "1.0.0",
+  "description": "iTunes Proxy API",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Wilmer Uruchi",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">= 20.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "exercise-task-1",
+  "version": "1.0.0",
+  "description": "Consume a public API and expose that information through an API. Then, allow a client UI to consume the custom API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wuruchi/exercise-task.git"
+  },
+  "author": "Wilmer Uruchi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wuruchi/exercise-task/issues"
+  },
+  "homepage": "https://github.com/wuruchi/exercise-task#readme",
+  "engines": {
+    "node": ">= 20.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
