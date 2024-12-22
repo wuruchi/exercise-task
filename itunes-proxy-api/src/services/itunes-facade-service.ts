@@ -1,15 +1,18 @@
-import axios from 'axios';
-import { UnknownErrorHandler } from '../utils/errors';
+import axios from "axios";
+import { UnknownErrorHandler } from "../utils/errors";
+import { ItunesAlbumsResponse } from "./interfaces/itunes-interfaces";
+import config from "../config";
 
 export default class ItunesFacadeService {
-    // Search albums using the service https://itunes.apple.com/search?parameterkeyvalue
-    async searchAlbums(term: string) {
+    async searchAlbums(term: string, limit: number) {
         try {
-            const response = await axios.get(`https://itunes.apple.com/search?term=${term}`);
+            const response = await axios.get<ItunesAlbumsResponse>(
+                `${config.itunesBaseUrl}/search?term=${term}&media=music&entity=album&attribute=artistTerm&limit=${limit}`
+            );
             return response.data;
         } catch (error) {
             console.error(error);
-            throw new UnknownErrorHandler().getHandledError(error);
+            throw (new UnknownErrorHandler()).getHandledError(error);
         }
     }
 }

@@ -11,26 +11,44 @@ info:
     url: https://opensource.org/licenses/MIT
 
 paths:
+  /docs:
+    get:
+      summary: Get Swagger UI
+      description: Get Swagger UI
+      responses:
+        '200':
+          description: Swagger UI
+          content:
+            text/html:
+              schema:
+                type: string
   /v0/albums:
     get:
-      summary: Search for albums
-      description: Search for albums by artist name
+      summary: Get Albums
+      description: Get Albums
       parameters:
-        - name: artist
+        - name: artistName
           in: query
-          description: Artist name
+          description: The name of the artist
           required: true
           schema:
             type: string
+        - name: limit
+          in: query
+          description: The number of albums to return. Same as in the iTunes API.
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
       responses:
         '200':
           description: A list of albums
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Album'
+                $ref: '#/components/schemas/AlbumCollectionResponse'
         '400':
           description: Invalid request
           content:
@@ -45,24 +63,33 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Album:
+    AlbumCollectionResponse:
       type: object
       properties:
-        artistName:
-          type: string
-        collectionName:
-          type: string
-        releaseDate:
-          type: string
-          format: date
-        primaryGenreName:
-          type: string
-        trackCount:
+        count:
           type: integer
-        collectionPrice:
-          type: number
-        currency:
-          type: string
+          description: The number of albums
+          items:
+            type: object
+            properties:
+              artistId:
+                type: integer
+                description: The artist ID
+              artistName:
+                type: string
+                description: The artist name
+              artworkUrl60:
+                type: string
+                description: The URL of the artwork (60x60)
+              artworkUrl100:
+                type: string
+                description: The URL of the artwork (100x100)
+              trackCount:
+                type: integer
+                description: The number of tracks
+              relesaseDate:
+                type: string
+                description: The release date
     Error:
       type: object
       properties:
