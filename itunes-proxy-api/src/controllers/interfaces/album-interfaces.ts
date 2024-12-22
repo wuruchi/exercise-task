@@ -1,5 +1,6 @@
 export interface AlbumItem {
     albumName: string;
+    albumUrl: string;
     artistId: number;
     artistName: string;
     artworkUrl100: string;

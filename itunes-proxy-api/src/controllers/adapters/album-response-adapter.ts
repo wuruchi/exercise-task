@@ -4,7 +4,7 @@ import config from "../../config";
 
 export class AlbumResponseAdapter {
 
-    private filterAlbums(itunesAlbums: ItunesAlbum[]) {
+    private applyFilters(itunesAlbums: ItunesAlbum[]) {
         const uniqueByNameFirstFoundKeptFilter = (albums: ItunesAlbum[]) => {
             const uniqueAlbumNames = new Set<string>();
             return albums.filter((album) => {
@@ -21,10 +21,12 @@ export class AlbumResponseAdapter {
     public adapt(itunesResponse: ItunesAlbumsResponse, queryParams: AlbumsQueryParams): AlbumsByArtistResponse {
         const keyValuePairs = Object.entries(queryParams);
         const queryString = keyValuePairs.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+        const albums = this.applyFilters(itunesResponse.results);
         return {
-            count: itunesResponse.resultCount,
-            items: this.filterAlbums(itunesResponse.results).map((result) => ({
+            count: albums.length,
+            items: albums.map((result) => ({
                 albumName: result.collectionName,
+                albumUrl: result.collectionViewUrl,
                 artistId: result.artistId,
                 artistName: result.artistName,
                 artworkUrl100: result.artworkUrl100,

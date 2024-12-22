@@ -72,24 +72,21 @@ components:
           items:
             type: object
             properties:
+              albumName:
+                type: string
+                description: The album name
+              albumUrl:
+                type: string
+                description: The URL of the album
               artistId:
                 type: integer
                 description: The artist ID
               artistName:
                 type: string
                 description: The artist name
-              artworkUrl60:
-                type: string
-                description: The URL of the artwork (60x60)
               artworkUrl100:
                 type: string
                 description: The URL of the artwork (100x100)
-              trackCount:
-                type: integer
-                description: The number of tracks
-              relesaseDate:
-                type: string
-                description: The release date
     Error:
       type: object
       properties:
