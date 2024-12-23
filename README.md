@@ -2,14 +2,21 @@
 
 ## Description
 
-This repository stores the implementation of a technical exercise.
+This repository stores the implementation of two technical exercises.
 
-The project contains two sub-projects:
+The **first exercise** involves building an API (`itunes-proxy-api`) that consumes the **iTunes API Search endpoint** for a specific scenario and then returns the result in a structured manner. Then, we build a `VueJS` UI (`itunes-proxy-ui`) that consumes the API and shows the information while also providing some extra funcionality.
 
-- `itunes-proxy-api`: Expresss API.
-- `itunes-proxy-ui`: VueJS UI that consumes the API.
+The **second exercise** involves analyzing a code sample, provide commentary on the quality of the code and try to identify potential sources of exceptions. Then, provide a refactored version. The file `task-2.js` contains the solution for this task.
 
-The file `task-2.js` contains commentary on an example file.
+## How to run
+
+You can manually run each project on a different terminal console, or run:
+
+```bash
+npm start
+```
+
+This command uses `docker-compose` to start the containers defined in the file `docker-compose.yml`. Make sure `docker` is up and running. Make sure the ports `5000` and `8080` are available.
 
 ## How to test
 
@@ -32,12 +39,3 @@ cd itunes-proxy-ui
 npm install
 npm run test
 ```
-## How to run
-
-You can manually run each project on a different terminal console, or run:
-
-```bash
-npm start
-```
-
-This command uses `docker-compose` to start the containers defined in the file `docker-compose.yml`. Make sure `docker` is up and running.
