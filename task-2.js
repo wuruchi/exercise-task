@@ -1,4 +1,5 @@
 /** Original */
+// This function lacks the next parameter, which is necessary to pass the error (if thrown) to the next middleware
 exports.inviteUser = function (req, res) {
     var invitationBody = req.body; // Let's assume this body has been properly validated
     var shopId = req.params.shopId;
@@ -107,13 +108,18 @@ class InvitationResponseValidator {
     }
 }
 
-class InvitationResponseHandler {
+class InvitationHandler {
     constructor(shopModel, userModel) {
         this.shopModel = shopModel;
         this.userModel = userModel;
     }
 
-
+    /**
+     *
+     * @param {*} authId
+     * @param {*} email
+     * @returns A registered User
+     */
     async createOrUpdateUser(authId, email) {
         return await this.userModel.findOneAndUpdate(
             {
@@ -129,8 +135,7 @@ class InvitationResponseHandler {
             });
     }
 
-    async onInvitationCreatedUpdateShop({ authId, email }, { invitationId, shopId }) {
-        const registeredUser = await this.createOrUpdateUser(authId, email);
+    async addInvitationToShop(invitationId, shopId, registeredUser) {
         let shop;
         try {
             shop = await this.shopModel.findById(shopId);
@@ -154,20 +159,23 @@ class InvitationResponseHandler {
 
 exports.inviteUser = function (req, res, next) {
     var invitationBody = req.body; // Let's assume this body has been properly validated
+    const { email } = invitationBody;
     var shopId = req.params.shopId;
     var authUrl = "https://url.to.auth.system.com/invitation";
     superagent
         .post(authUrl)
         .send(invitationBody)
         .end(function (err, invitationResponse) {
+            const { authId, invitationId } = invitationResponse.body;
             try {
                 (new InvitationResponseValidator(err, invitationResponse)).validate();
             } catch (err) {
                 next(err);
             }
             (async () => {
-                const invitationResponseHandler = new InvitationResponseHandler(Shop, User);
-                await invitationResponseHandler.onInvitationCreatedUpdateShop(invitationResponse.body, { invitationId: invitationResponse.body.invitationId, shopId });
+                const invitationResponseHandler = new InvitationHandler(Shop, User);
+                const registeredUser = await invitationResponseHandler.createOrUpdateUser(authId, email);
+                await invitationResponseHandler.addInvitationToShop(invitationId, shopId, registeredUser);
             })().catch(next);
         });
 };
