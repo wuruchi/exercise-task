@@ -18,6 +18,8 @@ npm start
 
 This command uses `docker-compose` to start the containers defined in the file `docker-compose.yml`. Make sure `docker` is up and running. Make sure the ports `5000` and `8080` are available.
 
+Then, go to `http://localhost:8080/` and start searching!
+
 ## How to test
 
 Make sure to use `node@20`.
