@@ -8,6 +8,7 @@ exports.inviteUser = function (req, res) {
         .post(authUrl)
         .send(invitationBody)
         .end(function (err, invitationResponse) {
+            // This function is assuming too many responsibilities: Handler User, Handle Shop, Handle Response Codes, Error Handling
             // What if the request resulted in an error?
             // What if the status is neither 201 nor 200?
             // What if the status is an error status?
@@ -39,22 +40,23 @@ exports.inviteUser = function (req, res) {
                             }
                             if (
                                 shop.invitations.indexOf(
-                                    invitationResponse.body.invitationId
+                                    invitationResponse.body.invitationId // I guess we should validate if the invitationId is not present in the shop
                                 )
                             ) {
                                 shop.invitations.push(
                                     invitationResponse.body.invitationId
-                                );
+                                ); // Let's assume invitations only saves Ids while users saves the whole user object
                             }
                             if (shop.users.indexOf(createdUser._id) === -1) {
                                 shop.users.push(createdUser);
                             }
-                            shop.save();
+                            shop.save(); // Let's only save if there are changes in the shop
                         });
                     }
                 );
             } else if (invitationResponse.status === 200) {
                 // Invitation already existed
+                // Let's handle this scenario on its own class or function
                 res.status(400).json({
                     error: true,
                     message: "User already invited to this shop",
@@ -69,27 +71,19 @@ exports.inviteUser = function (req, res) {
 
 // Let's assume the error handler middleware knows how to handle the errors thrown by the following classes
 class InvitationResponseValidator {
-    constructor(err, invitationResponse) {
-        this.err = err;
+    constructor(invitationResponse) {
         this.invitationsResponse = invitationResponse;
     }
 
-    onRequestError() {
-        if (this.err) {
-            throw InternalServerError(
-                "Error while creating invitation",
-                this.err
-            )
-        }
-        return;
-    }
-
     onErrorStatus() {
-        if (this.invitationsResponse.status !== 201 && this.invitationsResponse.status !== 200) {
+        if (
+            this.invitationsResponse.status !== 201 &&
+            this.invitationsResponse.status !== 200
+        ) {
             throw InternalServerError(
                 "Unexpected status code when handling invitation",
                 this.invitationsResponse
-            )
+            );
         }
         return;
     }
@@ -102,15 +96,16 @@ class InvitationResponseValidator {
     }
 
     validate() {
-        this.onRequestError();
         this.onErrorStatus();
         this.onUserAlreadyCreated();
     }
 }
 
-class InvitationHandler {
-    constructor(shopModel, userModel) {
-        this.shopModel = shopModel;
+/**
+ * General Purpose User Handler
+ */
+class UserHandler {
+    constructor(userModel) {
         this.userModel = userModel;
     }
 
@@ -118,7 +113,7 @@ class InvitationHandler {
      *
      * @param {*} authId
      * @param {*} email
-     * @returns A registered User
+     * @returns - A registered user
      */
     async createOrUpdateUser(authId, email) {
         return await this.userModel.findOneAndUpdate(
@@ -132,50 +127,71 @@ class InvitationHandler {
             {
                 upsert: true,
                 new: true,
-            });
+            }
+        );
+    }
+}
+
+/**
+ * General Purpose Shop Handler
+ */
+class ShopHandler {
+    constructor(shopModel) {
+        this.shopModel = shopModel;
     }
 
-    async addInvitationToShop(invitationId, shopId, registeredUser) {
-        let shop;
+    async getShop(shopId) {
         try {
-            shop = await this.shopModel.findById(shopId);
+            const shop = await this.shopModel.findById(shopId);
             if (!shop) {
-                throw new Error("No shop found");
+                throw NotFoundError("Shop not found");
             }
         } catch (err) {
-            throw InternalServerError("Error while updating shop", err);
+            if (err instanceof NotFoundError) {
+                throw err;
+            }
+            throw InternalServerError("Error while retrieving shop", err);
         }
-        if (shop.invitations.indexOf(invitationId)) {
+    }
+
+    async addInvitationIfNotExists(shop, invitationId) {
+        if (shop.invitations.indexOf(invitationId) === -1) {
             shop.invitations.push(invitationId);
+            await shop.save();
         }
-        if (shop.users.indexOf(registeredUser._id) === -1) {
-            shop.users.push(registeredUser);
-        }
-        await shop.save();
         return shop;
     }
 
+    async addUserIfNotExists(shop, registeredUser) {
+        if (shop.users.indexOf(registeredUser._id) === -1) {
+            shop.users.push(registeredUser);
+            await shop.save();
+        }
+        return shop;
+    }
 }
 
-exports.inviteUser = function (req, res, next) {
+exports.inviteUser = async (req, res, next) => {
     var invitationBody = req.body; // Let's assume this body has been properly validated
     const { email } = invitationBody;
     var shopId = req.params.shopId;
     var authUrl = "https://url.to.auth.system.com/invitation";
-    superagent
-        .post(authUrl)
-        .send(invitationBody)
-        .end(function (err, invitationResponse) {
-            const { authId, invitationId } = invitationResponse.body;
-            try {
-                (new InvitationResponseValidator(err, invitationResponse)).validate();
-            } catch (err) {
-                next(err);
-            }
-            (async () => {
-                const invitationResponseHandler = new InvitationHandler(Shop, User);
-                const registeredUser = await invitationResponseHandler.createOrUpdateUser(authId, email);
-                await invitationResponseHandler.addInvitationToShop(invitationId, shopId, registeredUser);
-            })().catch(next);
-        });
+    try {
+        const invitationResponse = await superagent.post(authUrl).send(invitationBody);
+        const { authId, invitationId } = invitationResponse.body;
+
+        (new InvitationResponseValidator(invitationResponse)).validate();
+
+        const registeredUser = await (new UserHandler(User)).createOrUpdateUser(authId, email);
+        const shopHandler = new ShopHandler(Shop);
+        const shop = await shopHandler.getShop(shopId);
+        await Promise.all([
+            shopHandler.addInvitationIfNotExists(shop, invitationId),
+            shopHandler.addUserIfNotExists(shop, registeredUser),
+        ]);
+        res.json(invitationResponse);
+        next();
+    } catch (err) {
+        next(err);
+    }
 };
