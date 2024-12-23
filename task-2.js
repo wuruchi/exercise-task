@@ -7,6 +7,9 @@ exports.inviteUser = function (req, res) {
         .post(authUrl)
         .send(invitationBody)
         .end(function (err, invitationResponse) {
+            // What if the request resulted in an error?
+            // What if the status is neither 201 nor 200?
+            // What if the status is an error status?
             if (invitationResponse.status === 201) {
                 User.findOneAndUpdate(
                     {
@@ -44,6 +47,7 @@ exports.inviteUser = function (req, res) {
                     }
                 );
             } else if (invitationResponse.status === 200) {
+                // Invitation already existed
                 res.status(400).json({
                     error: true,
                     message: "User already invited to this shop",
@@ -56,6 +60,10 @@ exports.inviteUser = function (req, res) {
 
 /** Refactored */
 //
+
+class InvitationResponseHandler {
+
+}
 
 function onInvitationCreated(invitationResponse, invitationBody, shopId) {
     const authId = invitationResponse.body.authId;
